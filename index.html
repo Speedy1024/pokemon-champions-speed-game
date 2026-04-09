@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>포켓몬 스피드 높을까 낮을까? | 포켓몬 챔피언스 스피드 퀴즈 게임</title>
+<meta name="description" content="포켓몬 챔피언스에서 사용 가능한 포켓몬의 스피드 스탯을 게임으로 익혀보세요! 높을까 낮을까 업다운 게임으로 스피드 감각을 키워보세요.">
+<meta name="keywords" content="포켓몬 스피드, 포켓몬 챔피언스, 포켓몬 스피드 순서, 포켓몬 스피드 랭킹, 포켓몬 스탯, 높을까 낮을까, 메가진화">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --red: #E3350D; --red-dark: #B22A09;
+    --yellow: #FFCB05; --yellow-dark: #C8A000;
+    --blue: #3B5CA8; --blue-light: #6890F0;
+    --bg: #1a1a2e; --bg2: #16213e; --bg3: #0f3460;
+    --card-bg: #1e2a4a; --card-border: #2d4080;
+    --text: #e8e8f0; --text-muted: #8899bb;
+    --correct: #4CAF50; --wrong: #E3350D;
+    --radius: 16px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; min-height: 100vh; }
+  #game-wrap { max-width: 700px; margin: 0 auto; padding: 24px 16px 48px; }
+
+  .game-header { text-align: center; margin-bottom: 20px; }
+  .game-title { font-family: 'Black Han Sans', sans-serif; font-size: clamp(20px, 5vw, 30px); color: var(--yellow); text-shadow: 2px 2px 0 var(--yellow-dark), 0 0 20px rgba(255,203,5,0.3); line-height: 1.2; }
+  .game-subtitle { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
+
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 14px; }
+  .filter-btn { font-size: 12px; padding: 4px 12px; border-radius: 20px; cursor: pointer; border: 1px solid var(--card-border); background: transparent; color: var(--text-muted); font-family: 'Noto Sans KR', sans-serif; transition: all 0.15s; }
+  .filter-btn.active { background: var(--blue); color: #fff; border-color: var(--blue-light); }
+
+  .scoreboard { display: flex; justify-content: space-between; align-items: center; background: var(--bg2); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 12px 20px; margin-bottom: 14px; }
+  .score-item { text-align: center; }
+  .score-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+  .score-num { font-family: 'Black Han Sans', sans-serif; font-size: 28px; color: var(--yellow); line-height: 1; margin-top: 2px; }
+  .score-num.best-num { color: #a78bfa; }
+  .score-divider { width: 1px; height: 40px; background: var(--card-border); }
+
+  .streak-row { display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; min-height: 14px; }
+  .streak-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--card-border); border: 1px solid #3d5090; transition: background 0.3s; }
+  .streak-dot.hit { background: var(--correct); border-color: var(--correct); box-shadow: 0 0 6px rgba(76,175,80,0.5); }
+  .streak-dot.miss { background: var(--wrong); border-color: var(--wrong); box-shadow: 0 0 6px rgba(227,53,13,0.5); }
+
+  .arena { display: grid; grid-template-columns: 1fr 44px 1fr; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .poke-card { background: var(--card-bg); border: 1.5px solid var(--card-border); border-radius: var(--radius); padding: 18px 10px 14px; text-align: center; transition: border-color 0.3s, box-shadow 0.3s; min-height: 210px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+  .poke-card.correct { border-color: var(--correct); box-shadow: 0 0 20px rgba(76,175,80,0.25); }
+  .poke-card.wrong { border-color: var(--wrong); box-shadow: 0 0 20px rgba(227,53,13,0.25); }
+  .poke-card-label { position: absolute; top: 8px; left: 10px; font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+  .mega-badge { position: absolute; top: 8px; right: 10px; font-size: 9px; padding: 2px 6px; background: rgba(163,115,255,0.2); border: 1px solid rgba(163,115,255,0.5); border-radius: 10px; color: #c89fff; letter-spacing: 0.5px; }
+
+  .poke-sprite-wrap { width: 88px; height: 88px; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%); border-radius: 50%; margin: 0 auto 6px; display: flex; align-items: center; justify-content: center; }
+  .poke-sprite { width: 80px; height: 80px; image-rendering: pixelated; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+
+  .poke-name { font-family: 'Black Han Sans', sans-serif; font-size: 15px; color: var(--text); margin-bottom: 4px; }
+  .speed-label { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+  .speed-val { font-family: 'Black Han Sans', sans-serif; font-size: 30px; color: var(--yellow); line-height: 1; }
+  .speed-hidden { font-family: 'Black Han Sans', sans-serif; font-size: 30px; color: var(--text-muted); line-height: 1; }
+  .speed-tier { font-size: 11px; margin-top: 4px; min-height: 16px; }
+
+  .vs-badge { width: 44px; height: 44px; border-radius: 50%; background: var(--bg3); border: 1.5px solid var(--card-border); display: flex; align-items: center; justify-content: center; font-family: 'Black Han Sans', sans-serif; font-size: 13px; color: var(--text-muted); flex-shrink: 0; }
+
+  .result-msg { text-align: center; min-height: 24px; font-size: 14px; color: var(--text-muted); margin-bottom: 12px; transition: color 0.2s; }
+  .result-msg.correct { color: var(--correct); font-weight: 700; }
+  .result-msg.wrong { color: var(--wrong); font-weight: 700; }
+
+  .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .btn-guess { padding: 14px; border-radius: var(--radius); font-family: 'Black Han Sans', sans-serif; font-size: 18px; cursor: pointer; border: none; transition: all 0.15s; letter-spacing: 1px; }
+  .btn-up { background: var(--correct); color: #fff; box-shadow: 0 4px 0 #2d7a30; }
+  .btn-up:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #2d7a30; }
+  .btn-up:active { transform: translateY(2px); box-shadow: 0 2px 0 #2d7a30; }
+  .btn-down { background: var(--wrong); color: #fff; box-shadow: 0 4px 0 var(--red-dark); }
+  .btn-down:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--red-dark); }
+  .btn-down:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--red-dark); }
+
+  .tip-text { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+
+  .gameover-screen { display: none; background: var(--card-bg); border: 1.5px solid var(--card-border); border-radius: var(--radius); padding: 32px 20px; text-align: center; margin-bottom: 14px; }
+  .gameover-screen.show { display: block; }
+  .gameover-title { font-family: 'Black Han Sans', sans-serif; font-size: 28px; color: var(--wrong); margin-bottom: 8px; }
+  .gameover-score { font-family: 'Black Han Sans', sans-serif; font-size: 64px; color: var(--yellow); line-height: 1; }
+  .gameover-unit { font-size: 14px; color: var(--text-muted); margin: 4px 0 16px; }
+  .gameover-detail { font-size: 13px; color: var(--text-muted); margin-bottom: 20px; line-height: 1.8; }
+  .btn-restart { background: var(--yellow); color: var(--bg); font-family: 'Black Han Sans', sans-serif; font-size: 18px; padding: 12px 36px; border: none; border-radius: var(--radius); cursor: pointer; box-shadow: 0 4px 0 var(--yellow-dark); transition: all 0.15s; }
+  .btn-restart:hover { transform: translateY(-2px); box-shadow: 0 6px 0 var(--yellow-dark); }
+  .btn-restart:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--yellow-dark); }
+
+  .seo-section { background: var(--bg2); border: 1px solid var(--card-border); border-radius: var(--radius); padding: 20px; margin-top: 32px; font-size: 13px; line-height: 1.8; color: var(--text-muted); }
+  .seo-section h2 { font-family: 'Black Han Sans', sans-serif; font-size: 18px; color: var(--yellow); margin-bottom: 10px; }
+
+  @media (max-width: 420px) {
+    .arena { grid-template-columns: 1fr 36px 1fr; gap: 6px; }
+    .poke-card { min-height: 185px; padding: 14px 6px 10px; }
+    .poke-sprite { width: 68px; height: 68px; }
+    .poke-sprite-wrap { width: 74px; height: 74px; }
+    .speed-val, .speed-hidden { font-size: 26px; }
+    .btn-guess { font-size: 15px; padding: 12px; }
+    .poke-name { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div id="game-wrap">
+
+  <div class="game-header">
+    <div class="game-title">⚡ 스피드 높을까 낮을까?</div>
+    <div class="game-subtitle">포켓몬 챔피언스 사용 가능 포켓몬 · 스피드 감각 키우기</div>
+  </div>
+
+  <div class="filter-row" id="filterRow"></div>
+
+  <div class="scoreboard">
+    <div class="score-item">
+      <div class="score-label">연속 정답</div>
+      <div class="score-num" id="score">0</div>
+    </div>
+    <div class="score-divider"></div>
+    <div class="score-item">
+      <div class="score-label">총 문제</div>
+      <div class="score-num" id="total">0</div>
+    </div>
+    <div class="score-divider"></div>
+    <div class="score-item">
+      <div class="score-label">최고 기록</div>
+      <div class="score-num best-num" id="best">0</div>
+    </div>
+  </div>
+
+  <div class="streak-row" id="streakRow"></div>
+
+  <div class="gameover-screen" id="gameoverScreen">
+    <div class="gameover-title">💥 게임 오버!</div>
+    <div class="gameover-score" id="goScore">0</div>
+    <div class="gameover-unit">연속 정답</div>
+    <div class="gameover-detail" id="goDetail"></div>
+    <button class="btn-restart" id="btnRestart">🔄 다시 도전!</button>
+  </div>
+
+  <div class="arena" id="arena">
+    <div class="poke-card" id="cardL">
+      <span class="poke-card-label">기준</span>
+      <span class="mega-badge" id="megaBadgeL" style="display:none">MEGA</span>
+      <div class="poke-sprite-wrap"><img class="poke-sprite" id="spriteL" src="" alt=""></div>
+      <div class="poke-name" id="nameL"></div>
+      <div class="speed-label">SPEED</div>
+      <div class="speed-val" id="speedL"></div>
+      <div class="speed-tier" id="tierL"></div>
+    </div>
+    <div class="vs-badge">VS</div>
+    <div class="poke-card" id="cardR">
+      <span class="poke-card-label">비교</span>
+      <span class="mega-badge" id="megaBadgeR" style="display:none">MEGA</span>
+      <div class="poke-sprite-wrap"><img class="poke-sprite" id="spriteR" src="" alt=""></div>
+      <div class="poke-name" id="nameR"></div>
+      <div class="speed-label">SPEED</div>
+      <div class="speed-hidden" id="speedR">???</div>
+      <div class="speed-tier" id="tierR"></div>
+    </div>
+  </div>
+
+  <div class="result-msg" id="resultMsg">오른쪽 포켓몬의 스피드가 더 높을까요, 낮을까요?</div>
+
+  <div class="btn-group" id="btnGroup">
+    <button class="btn-guess btn-up" id="btnUp">▲ 더 높다</button>
+    <button class="btn-guess btn-down" id="btnDown">▼ 더 낮다</button>
+  </div>
+
+  <div class="tip-text">동점이면 정답 처리 · 최고 기록은 자동 저장</div>
+
+  <div class="seo-section">
+    <h2>📖 포켓몬 챔피언스에서 스피드가 왜 중요한가</h2>
+    <p>스피드 스탯은 선공권을 결정하는 핵심 수치입니다. 노력치작의 변수가 있다 보니 기본 스탯 기준으로 제작하였습니다.</p>
+  </div>
+
+</div>
+
+<script>
+const DB = [
+  {name:'이상해꽃',speed:80,mega:false},{name:'리자몽',speed:100,mega:false},{name:'거북왕',speed:78,mega:false},
+  {name:'독침붕',speed:75,mega:false},{name:'피죤투',speed:101,mega:false},{name:'아보크',speed:80,mega:false},
+  {name:'피카츄',speed:90,mega:false},{name:'알로라 라이츄',speed:110,mega:false},{name:'라이츄',speed:110,mega:false},
+  {name:'픽시',speed:60,mega:false},{name:'알로라 나인테일',speed:109,mega:false},{name:'나인테일',speed:100,mega:false},
+  {name:'윈디',speed:95,mega:false},{name:'히스이 윈디',speed:90,mega:false},{name:'후딘',speed:120,mega:false},
+  {name:'괴력몬',speed:55,mega:false},{name:'우츠보트',speed:70,mega:false},{name:'가라르 야도란',speed:30,mega:false},
+  {name:'야도란',speed:30,mega:false},{name:'팬텀',speed:110,mega:false},{name:'캥카',speed:90,mega:false},
+  {name:'아쿠스타',speed:115,mega:false},{name:'쁘사이저',speed:85,mega:false},{name:'팔데아 켄타로스',speed:100,mega:false},
+  {name:'켄타로스',speed:110,mega:false},{name:'갸라도스',speed:81,mega:false},{name:'메타몽',speed:48,mega:false},
+  {name:'샤미드',speed:65,mega:false},{name:'쥬피썬더',speed:130,mega:false},{name:'부스터',speed:65,mega:false},
+  {name:'프테라',speed:130,mega:false},{name:'잠만보',speed:30,mega:false},{name:'망나뇽',speed:80,mega:false},
+  {name:'메가니움',speed:80,mega:false},{name:'히스이 블레이범',speed:95,mega:false},{name:'블레이범',speed:100,mega:false},
+  {name:'장크로다일',speed:78,mega:false},{name:'아리아도스',speed:40,mega:false},{name:'전룡',speed:55,mega:false},
+  {name:'마릴리',speed:50,mega:false},{name:'왕구리',speed:70,mega:false},{name:'에브이',speed:110,mega:false},
+  {name:'블래키',speed:65,mega:false},{name:'가라르 야도킹',speed:30,mega:false},{name:'야도킹',speed:30,mega:false},
+  {name:'쏘콘',speed:40,mega:false},{name:'강철톤',speed:30,mega:false},{name:'핫삼',speed:65,mega:false},
+  {name:'헤라크로스',speed:85,mega:false},{name:'무장조',speed:70,mega:false},{name:'헬가',speed:95,mega:false},
+  {name:'마기라스',speed:61,mega:false},{name:'패리퍼',speed:65,mega:false},{name:'가디안',speed:80,mega:false},
+  {name:'깜까미',speed:50,mega:false},{name:'보스로라',speed:50,mega:false},{name:'요가램',speed:80,mega:false},
+  {name:'썬더볼트',speed:105,mega:false},{name:'샤크니아',speed:95,mega:false},{name:'폭타',speed:40,mega:false},
+  {name:'코터스',speed:20,mega:false},{name:'파비코리',speed:80,mega:false},{name:'밀로틱',speed:81,mega:false},
+  {name:'캐스퐁',speed:70,mega:false},{name:'다크펫',speed:65,mega:false},{name:'치렁',speed:65,mega:false},
+  {name:'앱솔',speed:75,mega:false},{name:'얼음귀신',speed:80,mega:false},{name:'토대부기',speed:56,mega:false},
+  {name:'초염몽',speed:108,mega:false},{name:'엠페르트',speed:60,mega:false},{name:'렌트라',speed:70,mega:false},
+  {name:'로즈레이드',speed:90,mega:false},{name:'램펄드',speed:58,mega:false},{name:'바리톱스',speed:30,mega:false},
+  {name:'이어롭',speed:105,mega:false},{name:'화강돌',speed:35,mega:false},{name:'한카리아스',speed:102,mega:false},
+  {name:'루카리오',speed:90,mega:false},{name:'하마돈',speed:47,mega:false},{name:'독개굴',speed:85,mega:false},
+  {name:'눈설왕',speed:60,mega:false},{name:'포푸니라',speed:125,mega:false},{name:'거대코뿌리',speed:40,mega:false},
+  {name:'리피아',speed:95,mega:false},{name:'글레이시아',speed:65,mega:false},{name:'글라이온',speed:95,mega:false},
+  {name:'맘모꾸리',speed:80,mega:false},{name:'엘레이드',speed:80,mega:false},{name:'눈여아',speed:110,mega:false},
+  {name:'로토무',speed:91,mega:false},{name:'샤로다',speed:113,mega:false},{name:'염무왕',speed:65,mega:false},
+  {name:'히스이 대검귀',speed:85,mega:false},{name:'대검귀',speed:70,mega:false},{name:'보르쥬',speed:42,mega:false},
+  {name:'레파르다스',speed:106,mega:false},{name:'야나키',speed:101,mega:false},{name:'바오키',speed:101,mega:false},
+  {name:'아차키',speed:101,mega:false},{name:'몰드류',speed:88,mega:false},{name:'다부니',speed:50,mega:false},
+  {name:'노보청',speed:45,mega:false},{name:'엘풍',speed:116,mega:false},{name:'악비아르',speed:92,mega:false},
+  {name:'데스니칸',speed:30,mega:false},{name:'더스트나',speed:75,mega:false},{name:'히스이 조로아크',speed:110,mega:false},
+  {name:'조로아크',speed:105,mega:false},{name:'란쿨루스',speed:30,mega:false},{name:'배바닐라',speed:79,mega:false},
+  {name:'에몽가',speed:103,mega:false},{name:'샹델라',speed:80,mega:false},{name:'툰베어',speed:50,mega:false},
+  {name:'가라르 메더',speed:32,mega:false},{name:'메더',speed:32,mega:false},{name:'골루그',speed:55,mega:false},
+  {name:'삼삼드래',speed:98,mega:false},{name:'불카모스',speed:100,mega:false},{name:'브리가론',speed:64,mega:false},
+  {name:'마폭시',speed:104,mega:false},{name:'개굴닌자',speed:122,mega:false},{name:'파르토',speed:78,mega:false},
+  {name:'파이어로',speed:126,mega:false},{name:'비비용',speed:89,mega:false},{name:'플라엣테',speed:52,mega:false},
+  {name:'플라제스',speed:75,mega:false},{name:'부란다',speed:58,mega:false},{name:'트리미앙',speed:102,mega:false},
+  {name:'냐오닉스',speed:104,mega:false},{name:'킬가르도',speed:60,mega:false},{name:'프레프티르',speed:29,mega:false},
+  {name:'나루림',speed:72,mega:false},{name:'블로스터',speed:59,mega:false},{name:'일레도리자드',speed:109,mega:false},
+  {name:'견고라스',speed:71,mega:false},{name:'아마루르가',speed:58,mega:false},{name:'님피아',speed:60,mega:false},
+  {name:'루차불',speed:118,mega:false},{name:'데덴네',speed:101,mega:false},{name:'미끄래곤',speed:80,mega:false},
+  {name:'히스이 미끄래곤',speed:60,mega:false},{name:'클레피',speed:75,mega:false},{name:'대로트',speed:56,mega:false},
+  {name:'펌킨인',speed:84,mega:false},{name:'크레베이스',speed:28,mega:false},{name:'히스이 크레베이스',speed:38,mega:false},
+  {name:'음번',speed:123,mega:false},{name:'모크나이퍼',speed:70,mega:false},{name:'히스이 모크나이퍼',speed:60,mega:false},
+  {name:'어흥염',speed:60,mega:false},{name:'누리레느',speed:60,mega:false},{name:'왕큰부리',speed:60,mega:false},
+  {name:'모단단게',speed:43,mega:false},{name:'루가루암',speed:112,mega:false},{name:'더시마사리',speed:35,mega:false},
+  {name:'만마드',speed:35,mega:false},{name:'깨비물거미',speed:42,mega:false},{name:'염뉴트',speed:117,mega:false},
+  {name:'달코퀸',speed:72,mega:false},{name:'하랑우탄',speed:60,mega:false},{name:'내던숭이',speed:80,mega:false},
+  {name:'따라큐',speed:96,mega:false},{name:'할비롱',speed:36,mega:false},{name:'짜랑고우거',speed:85,mega:false},
+  {name:'아머까오',speed:67,mega:false},{name:'애프룡',speed:70,mega:false},{name:'단지래플',speed:30,mega:false},
+  {name:'사다이사',speed:71,mega:false},{name:'포트데스',speed:70,mega:false},{name:'브리무음',speed:29,mega:false},
+  {name:'마임꽁꽁',speed:70,mega:false},{name:'데스판',speed:30,mega:false},{name:'마휘핑',speed:64,mega:false},
+  {name:'모르페코',speed:97,mega:false},{name:'드래펄트',speed:142,mega:false},{name:'신비록',speed:65,mega:false},
+  {name:'사마자르',speed:85,mega:false},{name:'대쓰여너',speed:78,mega:false},{name:'포푸니크',speed:120,mega:false},
+  {name:'마스카나',speed:123,mega:false},{name:'라우드본',speed:66,mega:false},{name:'웨이니발',speed:85,mega:false},
+  {name:'파밀리쥐',speed:111,mega:false},{name:'콜로솔트',speed:35,mega:false},{name:'카디나르마',speed:75,mega:false},
+  {name:'파라블레이즈',speed:85,mega:false},{name:'찌리배리',speed:45,mega:false},{name:'스코빌런',speed:75,mega:false},
+  {name:'클레스퍼트라',speed:105,mega:false},{name:'두드리짱',speed:94,mega:false},{name:'돌핀맨',speed:100,mega:false},
+  {name:'꿈트렁',speed:65,mega:false},{name:'킬라플로르',speed:86,mega:false},{name:'키키링',speed:60,mega:false},
+  {name:'대도각참',speed:50,mega:false},{name:'차데스',speed:70,mega:false},{name:'브리두라스',speed:85,mega:false},
+  {name:'과미드라',speed:44,mega:false},
+  // 메가진화
+  {name:'메가이상해꽃',speed:80,mega:true},{name:'메가리자몽X',speed:100,mega:true},{name:'메가리자몽Y',speed:100,mega:true},
+  {name:'메가거북왕',speed:78,mega:true},{name:'메가독침붕',speed:145,mega:true},{name:'메가피죤투',speed:121,mega:true},
+  {name:'메가픽시',speed:70,mega:true},{name:'메가후딘',speed:150,mega:true},{name:'메가우츠보트',speed:70,mega:true},
+  {name:'메가야도란',speed:30,mega:true},{name:'메가팬텀',speed:130,mega:true},{name:'메가캥카',speed:100,mega:true},
+  {name:'메가아쿠스타',speed:120,mega:true},{name:'메가쁘사이저',speed:105,mega:true},{name:'메가갸라도스',speed:81,mega:true},
+  {name:'메가프테라',speed:150,mega:true},{name:'메가망나뇽',speed:100,mega:true},{name:'메가메가니움',speed:80,mega:true},
+  {name:'메가장크로다일',speed:78,mega:true},{name:'메가전룡',speed:45,mega:true},{name:'메가강철톤',speed:30,mega:true},
+  {name:'메가핫삼',speed:75,mega:true},{name:'메가헤라크로스',speed:75,mega:true},{name:'메가무장조',speed:110,mega:true},
+  {name:'메가헬가',speed:115,mega:true},{name:'메가마기라스',speed:71,mega:true},{name:'메가가디안',speed:100,mega:true},
+  {name:'메가깜까미',speed:20,mega:true},{name:'메가보스로라',speed:50,mega:true},{name:'메가요가램',speed:100,mega:true},
+  {name:'메가썬더볼트',speed:135,mega:true},{name:'메가샤크니아',speed:105,mega:true},{name:'메가폭타',speed:20,mega:true},
+  {name:'메가파비코리',speed:80,mega:true},{name:'메가다크펫',speed:75,mega:true},{name:'메가치렁',speed:65,mega:true},
+  {name:'메가앱솔',speed:115,mega:true},{name:'메가얼음귀신',speed:100,mega:true},{name:'메가이어롭',speed:135,mega:true},
+  {name:'메가한카리아스',speed:92,mega:true},{name:'메가루카리오',speed:112,mega:true},{name:'메가눈설왕',speed:30,mega:true},
+  {name:'메가엘레이드',speed:110,mega:true},{name:'메가눈여아',speed:120,mega:true},{name:'메가염무왕',speed:75,mega:true},
+  {name:'메가몰드류',speed:103,mega:true},{name:'메가다부니',speed:50,mega:true},{name:'메가샹델라',speed:90,mega:true},
+  {name:'메가골루그',speed:55,mega:true},{name:'메가브리가론',speed:44,mega:true},{name:'메가마폭시',speed:134,mega:true},
+  {name:'메가개굴닌자',speed:142,mega:true},{name:'메가플라엣테',speed:102,mega:true},{name:'메가냐오닉스',speed:124,mega:true},
+  {name:'메가루차불',speed:118,mega:true},{name:'메가모단단게',speed:33,mega:true},{name:'메가할비롱',speed:36,mega:true},
+  {name:'메가스코빌런',speed:75,mega:true},{name:'메가킬라플로르',speed:101,mega:true}
+];
+
+const ID_MAP = {
+  '이상해꽃':3,'리자몽':6,'거북왕':9,'독침붕':15,'피죤투':17,'아보크':24,
+  '피카츄':25,'알로라 라이츄':26,'라이츄':26,'픽시':36,'알로라 나인테일':38,'나인테일':38,
+  '윈디':59,'히스이 윈디':59,'후딘':65,'괴력몬':68,'우츠보트':73,'가라르 야도란':80,
+  '야도란':80,'팬텀':94,'캥카':115,'아쿠스타':121,'쁘사이저':123,'팔데아 켄타로스':128,
+  '켄타로스':128,'갸라도스':130,'메타몽':132,'샤미드':136,'쥬피썬더':135,'부스터':136,
+  '프테라':142,'잠만보':143,'망나뇽':149,'메가니움':154,'히스이 블레이범':157,'블레이범':157,
+  '장크로다일':160,'아리아도스':168,'전룡':181,'마릴리':183,'왕구리':186,
+  '에브이':196,'블래키':197,'가라르 야도킹':199,'야도킹':199,'쏘콘':205,'강철톤':208,
+  '핫삼':212,'헤라크로스':214,'무장조':227,'헬가':229,'마기라스':248,'패리퍼':279,
+  '가디안':282,'깜까미':302,'보스로라':306,'요가램':307,'썬더볼트':310,'샤크니아':319,
+  '폭타':323,'코터스':324,'파비코리':334,'밀로틱':350,'캐스퐁':351,'다크펫':359,
+  '치렁':362,'앱솔':359,'얼음귀신':361,'토대부기':389,'초염몽':392,'엠페르트':395,
+  '렌트라':405,'로즈레이드':407,'램펄드':409,'바리톱스':411,'이어롭':430,'화강돌':411,
+  '한카리아스':445,'루카리오':448,'하마돈':450,'독개굴':454,'눈설왕':460,'포푸니라':461,
+  '거대코뿌리':464,'리피아':470,'글레이시아':471,'글라이온':472,'맘모꾸리':473,
+  '엘레이드':475,'눈여아':478,'로토무':479,'샤로다':497,'염무왕':500,
+  '히스이 대검귀':503,'대검귀':503,'보르쥬':504,'레파르다스':510,'야나키':511,
+  '바오키':512,'아차키':513,'몰드류':530,'다부니':531,'노보청':534,'엘풍':547,
+  '악비아르':551,'데스니칸':563,'더스트나':569,'히스이 조로아크':571,'조로아크':571,
+  '란쿨루스':579,'배바닐라':584,'에몽가':587,'샹델라':609,'툰베어':614,'가라르 메더':618,
+  '메더':618,'골루그':623,'삼삼드래':635,'불카모스':637,'브리가론':652,'마폭시':655,
+  '개굴닌자':658,'파르토':660,'파이어로':663,'비비용':666,'플라엣테':670,'플라제스':671,
+  '부란다':673,'트리미앙':675,'냐오닉스':678,'킬가르도':681,'프레프티르':683,'나루림':695,
+  '블로스터':693,'일레도리자드':697,'견고라스':699,'아마루르가':699,'님피아':700,
+  '루차불':701,'데덴네':702,'미끄래곤':706,'히스이 미끄래곤':706,'클레피':707,
+  '대로트':711,'펌킨인':710,'크레베이스':713,'히스이 크레베이스':713,'음번':724,
+  '모크나이퍼':724,'히스이 모크나이퍼':724,'어흥염':727,'누리레느':730,'왕큰부리':733,
+  '모단단게':738,'루가루암':745,'더시마사리':748,'만마드':750,'깨비물거미':752,
+  '염뉴트':754,'달코퀸':756,'하랑우탄':759,'내던숭이':760,'따라큐':778,'할비롱':781,
+  '짜랑고우거':784,'아머까오':823,'애프룡':841,'단지래플':844,'사다이사':845,
+  '포트데스':855,'브리무음':858,'마임꽁꽁':863,'데스판':867,'마휘핑':869,
+  '모르페코':877,'드래펄트':887,'신비록':892,'사마자르':894,'대쓰여너':900,
+  '포푸니크':904,'마스카나':952,'라우드본':960,'웨이니발':964,'파밀리쥐':972,
+  '콜로솔트':967,'카디나르마':970,'파라블레이즈':974,'찌리배리':980,'스코빌런':978,
+  '클레스퍼트라':982,'두드리짱':983,'돌핀맨':986,'꿈트렁':988,'킬라플로르':995,
+  '키키링':994,'대도각참':999,'차데스':1000,'브리두라스':1004,'과미드라':1009,
+  '메가이상해꽃':3,'메가리자몽X':6,'메가리자몽Y':6,'메가거북왕':9,'메가독침붕':15,
+  '메가피죤투':17,'메가픽시':36,'메가후딘':65,'메가우츠보트':73,'메가야도란':80,
+  '메가팬텀':94,'메가캥카':115,'메가아쿠스타':121,'메가쁘사이저':123,'메가갸라도스':130,
+  '메가프테라':142,'메가망나뇽':149,'메가메가니움':154,'메가장크로다일':160,'메가전룡':181,
+  '메가강철톤':208,'메가핫삼':212,'메가헤라크로스':214,'메가무장조':227,'메가헬가':229,
+  '메가마기라스':248,'메가가디안':282,'메가깜까미':302,'메가보스로라':306,'메가요가램':307,
+  '메가썬더볼트':310,'메가샤크니아':319,'메가폭타':323,'메가파비코리':334,'메가다크펫':359,
+  '메가치렁':362,'메가앱솔':359,'메가얼음귀신':361,'메가이어롭':430,'메가한카리아스':445,
+  '메가루카리오':448,'메가눈설왕':460,'메가엘레이드':475,'메가눈여아':478,'메가염무왕':500,
+  '메가몰드류':530,'메가다부니':531,'메가샹델라':609,'메가골루그':623,'메가브리가론':652,
+  '메가마폭시':655,'메가개굴닌자':658,'메가플라엣테':670,'메가냐오닉스':678,'메가루차불':701,
+  '메가모단단게':738,'메가할비롱':781,'메가스코빌런':978,'메가킬라플로르':995
+};
+
+const FILTERS = [
+  {key:'all', label:'전체'},
+  {key:'normal', label:'일반'},
+  {key:'mega', label:'메가진화'},
+  {key:'fast', label:'빠른 포켓몬'},
+  {key:'slow', label:'느린 포켓몬'},
+];
+
+let activeFilter = 'all', leftP, rightP, score, totalQ, best, history, answered;
+
+// 필터 버튼 JS로 생성 (티스토리 onclick 제거 문제 방지)
+(function buildFilters() {
+  const row = document.getElementById('filterRow');
+  FILTERS.forEach(f => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn' + (f.key === 'all' ? ' active' : '');
+    btn.textContent = f.label;
+    btn.addEventListener('click', () => setFilter(f.key, btn));
+    row.appendChild(btn);
+  });
+})();
+
+document.getElementById('btnUp').addEventListener('click', () => guess(true));
+document.getElementById('btnDown').addEventListener('click', () => guess(false));
+document.getElementById('btnRestart').addEventListener('click', () => startGame());
+
+function spriteUrl(name) {
+  const id = ID_MAP[name];
+  if (!id) return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png';
+  return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/' + id + '.png';
+}
+
+function getTier(spd) {
+  if (spd >= 120) return {label:'최상위권', color:'#ff6b6b'};
+  if (spd >= 100) return {label:'상위권', color:'#ffa94d'};
+  if (spd >= 80)  return {label:'중상위권', color:'#ffd43b'};
+  if (spd >= 60)  return {label:'중위권', color:'#69db7c'};
+  return {label:'하위권', color:'#74c0fc'};
+}
+
+function getPool() {
+  if (activeFilter === 'mega') return DB.filter(p => p.mega);
+  if (activeFilter === 'normal') return DB.filter(p => !p.mega);
+  if (activeFilter === 'fast') return DB.filter(p => p.speed >= 100);
+  if (activeFilter === 'slow') return DB.filter(p => p.speed < 60);
+  return DB;
+}
+
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  startGame();
+}
+
+function pick(exclude) {
+  const pool = getPool().filter(p => !exclude || p.name !== exclude.name);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function renderCard(side, poke, hideSpeed) {
+  document.getElementById('sprite' + side).src = spriteUrl(poke.name);
+  document.getElementById('sprite' + side).alt = poke.name;
+  document.getElementById('name' + side).textContent = poke.name;
+  document.getElementById('megaBadge' + side).style.display = poke.mega ? '' : 'none';
+  const sv = document.getElementById('speed' + side);
+  const tier = getTier(poke.speed);
+  if (hideSpeed) {
+    sv.className = 'speed-hidden'; sv.textContent = '???';
+    document.getElementById('tier' + side).textContent = '';
+  } else {
+    sv.className = 'speed-val'; sv.textContent = poke.speed;
+    document.getElementById('tier' + side).textContent = tier.label;
+    document.getElementById('tier' + side).style.color = tier.color;
+  }
+  document.getElementById('card' + side).className = 'poke-card';
+}
+
+function renderStreak() {
+  const row = document.getElementById('streakRow');
+  row.innerHTML = '';
+  const total = Math.max(history.length, 10);
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'streak-dot' + (i < history.length ? (history[i] ? ' hit' : ' miss') : '');
+    row.appendChild(d);
+  }
+}
+
+function startGame() {
+  score = 0; totalQ = 0; history = []; answered = false;
+  best = parseInt(localStorage.getItem('pkSpeedBest3') || '0');
+  document.getElementById('score').textContent = 0;
+  document.getElementById('total').textContent = 0;
+  document.getElementById('best').textContent = best;
+  document.getElementById('resultMsg').textContent = '오른쪽 포켓몬의 스피드가 더 높을까요, 낮을까요?';
+  document.getElementById('resultMsg').className = 'result-msg';
+  document.getElementById('gameoverScreen').classList.remove('show');
+  document.getElementById('arena').style.display = '';
+  document.getElementById('btnGroup').style.display = '';
+  renderStreak();
+  leftP = pick(null);
+  rightP = pick(leftP);
+  renderCard('L', leftP, false);
+  renderCard('R', rightP, true);
+}
+
+function guess(higher) {
+  if (answered) return;
+  answered = true;
+  totalQ++;
+  document.getElementById('total').textContent = totalQ;
+  const correct = higher ? rightP.speed >= leftP.speed : rightP.speed <= leftP.speed;
+  const tie = rightP.speed === leftP.speed;
+  renderCard('R', rightP, false);
+  const msg = document.getElementById('resultMsg');
+  if (correct) {
+    score++;
+    history.push(true);
+    if (score > best) {
+      best = score;
+      localStorage.setItem('pkSpeedBest3', best);
+      document.getElementById('best').textContent = best;
+    }
+    document.getElementById('score').textContent = score;
+    document.getElementById('cardR').classList.add('correct');
+    msg.textContent = tie ? '동점! (둘 다 ' + leftP.speed + ') 정답 처리!' : '정답! ' + rightP.name + '의 스피드 ' + rightP.speed;
+    msg.className = 'result-msg correct';
+    renderStreak();
+    setTimeout(function() {
+      leftP = rightP; rightP = pick(leftP);
+      renderCard('L', leftP, false);
+      renderCard('R', rightP, true);
+      msg.textContent = '오른쪽 포켓몬의 스피드가 더 높을까요, 낮을까요?';
+      msg.className = 'result-msg';
+      answered = false;
+    }, 1300);
+  } else {
+    history.push(false);
+    document.getElementById('cardR').classList.add('wrong');
+    document.getElementById('cardL').classList.add('correct');
+    msg.textContent = '틀렸어요! ' + rightP.name + '의 스피드는 ' + rightP.speed;
+    msg.className = 'result-msg wrong';
+    renderStreak();
+    setTimeout(function() {
+      document.getElementById('arena').style.display = 'none';
+      document.getElementById('btnGroup').style.display = 'none';
+      document.getElementById('goScore').textContent = score;
+      document.getElementById('goDetail').innerHTML =
+        '총 ' + totalQ + '문제 중 ' + score + '개 정답<br>' +
+        (score >= best && score > 0 ? '🏆 최고 기록 달성!' : '최고 기록: ' + best + '연속');
+      document.getElementById('gameoverScreen').classList.add('show');
+    }, 1200);
+  }
+}
+
+startGame();
+</script>
+</body>
+</html>
